@@ -1,0 +1,841 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Time Knows Your Name</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@1,400;1,700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
+
+<style>
+    html, body {
+        height: 100vh; width: 100vw; margin: 0; padding: 0;
+        display: flex; justify-content: center; align-items: center;
+        background: #090A0F radial-gradient(ellipse at bottom, #1B2735 0%, #090A0F 100%);
+        background-attachment: fixed;
+        font-family: 'Cormorant Garamond', serif; font-style: italic;
+        overflow: hidden; position: relative; 
+        transition: background 6s ease-in-out; 
+    }
+
+    .stars-container { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; z-index: 0; pointer-events: none; }
+    .star { position: absolute; background: white; border-radius: 50%; opacity: 0.5; animation: twinkle var(--duration) infinite ease-in-out; }
+    @keyframes twinkle { 0%, 100% { opacity: 0.3; transform: scale(1); } 50% { opacity: 1; transform: scale(1.2); } }
+
+    /* SHOOTING STAR EFFECT */
+    .shooting-star {
+        position: absolute; left: 50%; top: 50%; height: 2px;
+        background: linear-gradient(-45deg, #ffffff, rgba(0, 0, 255, 0));
+        border-radius: 999px; filter: drop-shadow(0 0 6px #ffffff);
+        animation: tail 3s ease-in-out infinite, shooting 3s ease-in-out infinite;
+        z-index: 1; pointer-events: none;
+    }
+    @keyframes tail { 0% { width: 0; } 30% { width: 100px; } 100% { width: 0; } }
+    @keyframes shooting { 0% { transform: translateX(0) translateY(0) rotate(45deg); } 100% { transform: translateX(-500px) translateY(500px) rotate(45deg); } }
+
+    /* CONSTELLATION REVEAL */
+    #constellationOverlay {
+        position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+        background: rgba(0,0,0,0.9); z-index: 5000;
+        display: none; justify-content: center; align-items: center;
+        flex-direction: column; opacity: 0; transition: opacity 1.5s;
+    }
+    #constellationName {
+        font-family: 'Cormorant Garamond', serif; font-size: 4rem; color: white;
+        text-shadow: 0 0 20px #a259ff, 0 0 40px #fff; letter-spacing: 10px;
+        animation: nameGlow 3s ease-in-out forwards;
+    }
+    @keyframes nameGlow { 0% { opacity: 0; transform: scale(0.8); filter: blur(10px); } 50% { opacity: 1; transform: scale(1.1); filter: blur(0px); } 100% { opacity: 0; transform: scale(1.2); filter: blur(5px); } }
+
+    /* STARDUST TRAIL */
+    .trail-particle {
+        position: fixed; background: #a259ff; border-radius: 50%;
+        pointer-events: none; z-index: 9999; animation: fadeParticle 1s forwards;
+    }
+    @keyframes fadeParticle { 0% { opacity: 0.8; transform: scale(1); } 100% { opacity: 0; transform: scale(0.1); } }
+
+    /* BOX STYLES */
+    #introContainer { text-align:center; z-index:10; transition: all 1s ease; }
+    .huge-pixel-title {
+        font-family: 'Press Start 2P', cursive; font-size: 24px; color: white;
+        text-shadow: 0 0 10px #6a0dad, 0 0 20px #6a0dad; line-height: 1.4;
+        animation: floatTitle 3s ease-in-out infinite; margin-bottom: 20px;
+    }
+    @keyframes floatTitle { 0%,100%{transform:translateY(0);}50%{transform:translateY(-15px);} }
+
+    .content-box {
+        display: none; width: 350px; padding: 40px 25px; text-align: center;
+        border: 1px solid rgba(255, 255, 255, 0.2); border-radius: 25px;
+        background: rgba(255, 255, 255, 0.08); backdrop-filter: blur(20px);
+        box-shadow: 0 15px 35px rgba(0, 0, 0, 0.5), inset 0 0 15px rgba(106, 13, 173, 0.3);
+        z-index: 10; opacity: 0; transform: translateY(20px);
+        transition: opacity 0.8s ease, transform 0.8s ease, box-shadow 0.3s ease; color: white;
+        animation: boxFloat 5s ease-in-out infinite;
+    }
+    @keyframes boxFloat { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-8px); } }
+    .show { opacity: 1 !important; display: block !important; transform: translateY(0) !important; }
+
+    /* ERROR FLICKER */
+    .error-shake { animation: shakeError 0.4s ease-in-out !important; box-shadow: 0 0 30px rgba(255, 0, 0, 0.6), inset 0 0 15px rgba(255, 0, 0, 0.4) !important; border-color: rgba(255, 0, 0, 0.5) !important; }
+    @keyframes shakeError {
+        0%, 100% { transform: translateX(0); }
+        20%, 60% { transform: translateX(-10px); }
+        40%, 80% { transform: translateX(10px); }
+    }
+
+    /* BUTTONS */
+    .action-btn {
+        font-family: 'Cormorant Garamond', serif; font-style: italic;
+        padding: 12px 28px; border-radius: 50px; border: 1px solid rgba(255,255,255,0.3);
+        background-color: #6a0dad; color: white; font-weight: bold;
+        cursor: pointer; transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); margin: 5px; 
+        position: relative; overflow: hidden; z-index: 1;
+        box-shadow: 0 4px 15px rgba(106, 13, 173, 0.4);
+    }
+    .action-btn::after {
+        content: ''; position: absolute; top: 0; left: -100%;
+        width: 100%; height: 100%;
+        background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
+        transition: 0.6s; z-index: -1;
+    }
+    .action-btn:hover::after { left: 100%; }
+    .action-btn:hover { transform: scale(1.08); background-color: #8a2be2; box-shadow: 0 0 20px #a259ff; border-color: white; }
+
+    /* EMOJI ANIMATIONS */
+    .floating-emoji { font-size: 55px; margin-bottom: 15px; display: inline-block; filter: drop-shadow(0 5px 10px rgba(0,0,0,0.3)); }
+    .shh-emoji { animation: shhWiggle 4s infinite ease-in-out; }
+    .lock-emoji { animation: lockPulse 2s infinite ease-in-out; }
+    .game-emoji { animation: gameOrbit 3s infinite ease-in-out; }
+    @keyframes shhWiggle { 0%, 100% { transform: rotate(-5deg); } 50% { transform: rotate(5deg) scale(1.1); } }
+    @keyframes lockPulse { 0%, 100% { transform: scale(1); filter: brightness(1); } 50% { transform: scale(1.1); filter: brightness(1.3); } }
+    @keyframes gameOrbit { 0%, 100% { transform: translateY(0) rotate(0); } 50% { transform: translateY(-15px) rotate(5deg); } }
+
+    /* --- FIXED GAME GRID & CARDS --- */
+    #cardGrid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-top: 20px; perspective: 1000px; }
+    
+    .card-container {
+        height: 60px;
+        perspective: 1000px;
+        opacity: 0;
+        transform: translateY(50px) scale(0.5);
+        transition: all 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+    .card-container.card-rise { opacity: 1; transform: translateY(0) scale(1); }
+
+    .memory-card { 
+        width: 100%; height: 100%;
+        position: relative;
+        transform-style: preserve-3d;
+        transition: transform 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+        cursor: pointer;
+    }
+
+    .memory-card.flipped { transform: rotateY(180deg); }
+
+    .card-face {
+        position: absolute; width: 100%; height: 100%;
+        backface-visibility: hidden;
+        display: flex; align-items: center; justify-content: center;
+        border-radius: 12px; border: 1px solid rgba(255,255,255,0.1);
+        font-size: 28px;
+    }
+
+    .card-back { 
+        background: linear-gradient(135deg, #4b0082, #6a0dad); 
+        color: rgba(255, 255, 255, 0.6);
+        font-family: 'Press Start 2P', cursive;
+        font-size: 20px;
+        text-shadow: 0 0 10px #a259ff;
+    }
+    .card-back::after { content: '?'; animation: questionPulse 2s infinite; }
+    @keyframes questionPulse { 0%, 100% { opacity: 0.5; transform: scale(1); } 50% { opacity: 1; transform: scale(1.2); } }
+
+    .card-front { 
+        background: #f2d7ff; color: #6a0dad; 
+        transform: rotateY(180deg); 
+        box-shadow: 0 0 15px #f2d7ff;
+    }
+
+    /* OVERLAYS */
+    #countdownOverlay {
+        display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+        background: radial-gradient(circle, #1a0b2e 0%, #000 100%); z-index: 1000; 
+        justify-content: center; align-items: center;
+        color: white; font-family: 'Press Start 2P', cursive; font-size: 80px; 
+        opacity: 0; transition: opacity 0.8s ease;
+        text-shadow: 0 0 20px #6a0dad, 0 0 40px #a259ff;
+    }
+
+    /* REWARD */
+    .bouncing-cake { font-size: 110px; display: inline-block; filter: drop-shadow(0 10px 20px rgba(0,0,0,0.5)); animation: cakeMove 2s infinite ease-in-out; }
+    @keyframes cakeMove { 0%, 100% { transform: translateY(0) rotate(-2deg); } 50% { transform: translateY(-20px) rotate(2deg); } }
+    .stop-animation { animation: none !important; transform: scale(1.1) !important; transition: 4s ease-in-out; }
+    .universe-dark { background: #000 !important; }
+    .typing-text { white-space: pre-wrap; display: inline-block; }
+
+    /* WISH SCATTER STYLES */
+    #wishInput, #riddleInput, #nameInput {
+        width: 80%; padding: 10px; background: rgba(255,255,255,0.1); border: 1px solid #6a0dad;
+        color: white; border-radius: 10px; font-family: 'Cormorant Garamond', serif;
+        font-style: italic; font-size: 1.1rem; outline: none; margin-bottom: 15px;
+    }
+    .fold-animation { animation: foldAndVanish 1s forwards cubic-bezier(0.455, 0.03, 0.515, 0.955); }
+    @keyframes foldAndVanish {
+        0% { transform: scale(1) rotateX(0deg); opacity: 1; }
+        50% { transform: scale(0.5) rotateX(90deg); opacity: 0.7; }
+        100% { transform: scale(0) rotateX(180deg); opacity: 0; }
+    }
+    .particle {
+        position: absolute; width: 5px; height: 5px; background: #a259ff;
+        border-radius: 50%; pointer-events: none; z-index: 999;
+    }
+
+    .scatter-letter {
+        display: inline-block;
+        transition: all 2s cubic-bezier(0.25, 0.1, 0.25, 1);
+        position: relative;
+    }
+
+    /* FINAL BOX ADJUSTED FOR LONG TEXT */
+    #finalBox { 
+        width: 90%; 
+        max-width: 550px; 
+        max-height: 80vh; 
+        overflow-y: auto; 
+        padding: 30px; 
+        scrollbar-width: thin;
+        scrollbar-color: #6a0dad transparent;
+    }
+    #finalBox::-webkit-scrollbar { width: 6px; }
+    #finalBox::-webkit-scrollbar-thumb { background: #6a0dad; border-radius: 10px; }
+
+    /* SKIP BUTTON STYLE */
+    #skipBtn {
+        display: none;
+        margin: 15px auto 0 auto;
+        font-family: 'Press Start 2P', cursive;
+        font-size: 10px;
+        background: rgba(255, 255, 255, 0.1);
+        border: 1px solid rgba(255, 255, 255, 0.3);
+        color: #e0bbff;
+        padding: 8px 15px;
+        cursor: pointer;
+        border-radius: 5px;
+        transition: 0.3s;
+    }
+    #skipBtn:hover { background: rgba(106, 13, 173, 0.4); border-color: #a259ff; }
+
+    /* LIVE COUNTER STYLE */
+    #liveCounter {
+        display: none;
+        font-family: 'Press Start 2P', cursive;
+        font-size: 9px;
+        color: #a259ff;
+        background: rgba(0,0,0,0.4);
+        padding: 15px;
+        border-radius: 15px;
+        margin-bottom: 20px;
+        line-height: 1.8;
+        border: 1px solid rgba(162, 89, 255, 0.3);
+        text-align: left;
+    }
+    .counter-value { color: white; }
+
+    /* --- VOICE OF COSMOS STYLES --- */
+    #pulseBtnContainer { margin: 20px 0; position: relative; height: 120px; display: flex; align-items: center; justify-content: center; }
+    .pulse-orb {
+        width: 80px; height: 80px; background: radial-gradient(circle, #a259ff 0%, #6a0dad 100%);
+        border-radius: 50%; cursor: pointer; position: relative; z-index: 5;
+        box-shadow: 0 0 20px #a259ff; transition: transform 0.2s;
+        user-select: none; -webkit-tap-highlight-color: transparent;
+    }
+    .pulse-orb:active { transform: scale(0.9); }
+    .ripple {
+        position: absolute; border: 2px solid #a259ff; border-radius: 50%;
+        pointer-events: none; animation: rippleAnim 2s infinite; opacity: 0;
+    }
+    @keyframes rippleAnim {
+        0% { transform: scale(1); opacity: 0.8; }
+        100% { transform: scale(4); opacity: 0; }
+    }
+    #progressRing {
+        position: absolute; width: 100px; height: 100px; border-radius: 50%;
+        border: 4px solid rgba(255,255,255,0.1); border-top: 4px solid #a259ff;
+        display: none; animation: spin 1s linear infinite;
+    }
+    @keyframes spin { 100% { transform: rotate(360deg); } }
+
+    /* --- TIMELINE SUMMARY STYLES --- */
+    .summary-stat {
+        margin: 15px 0; opacity: 0; transform: scale(0.8);
+        transition: all 0.6s ease-out;
+    }
+    .summary-stat.reveal { opacity: 1; transform: scale(1); }
+    .stat-label { font-family: 'Press Start 2P', cursive; font-size: 9px; color: #a259ff; display: block; margin-bottom: 5px; }
+    .stat-value { font-size: 1.3rem; color: white; }
+</style>
+</head>
+<body onmousemove="createTrail(event)" ontouchmove="createTrail(event)">
+
+<div class="stars-container" id="stars"></div>
+<div id="countdownOverlay">3</div>
+
+<div id="constellationOverlay">
+    <div id="constellationName"></div>
+    <p style="color: #e0bbff; font-family: 'Press Start 2P'; font-size: 8px; margin-top: 20px; letter-spacing: 2px;">SYNC COMPLETE</p>
+</div>
+
+<div id="introContainer">
+    <h1 class="huge-pixel-title">Time Knows<br>Your Name</h1>
+    <div style="cursor:pointer;" onclick="showBox('secretBox')">
+        <span style="font-family:'Press Start 2P'; font-size:12px; color:#e0bbff; letter-spacing: 2px;">PRESS PLAY</span><br>
+        <span style="font-size:50px; filter: drop-shadow(0 0 10px #6a0dad);">🐾</span>
+    </div>
+</div>
+
+<div id="secretBox" class="content-box">
+    <div class="floating-emoji shh-emoji">🤫</div>
+    <p style="font-size: 1.1rem;">Before anything else, can you promise you'll keep this a secret between us?</p>
+    <button class="action-btn" onclick="transitionBox('secretBox', 'birthBox')">I promise</button>
+</div>
+
+<div id="birthBox" class="content-box">
+    <div class="floating-emoji lock-emoji">🔒</div>
+    <p>Enter your birthdate to unlock your gift</p>
+    <div style="margin-bottom: 20px;">
+        <select id="month" style="background:#1a0b2e; color:white; border: 1px solid #6a0dad; padding: 5px; border-radius:5px;"><option value="">MM</option><script>for(let m=1;m<=12;m++) document.write(`<option value="${m<10?'0'+m:m}">${m<10?'0'+m:m}</option>`);</script></select>
+        <select id="day" style="background:#1a0b2e; color:white; border: 1px solid #6a0dad; padding: 5px; border-radius:5px;"><option value="">DD</option><script>for(let i=1;i<=31;i++) document.write(`<option value="${i<10?'0'+i:i}">${i<10?'0'+i:i}</option>`);</script></select>
+        <select id="year" style="background:#1a0b2e; color:white; border: 1px solid #6a0dad; padding: 5px; border-radius:5px;"><option value="">YY</option><script>for(let y=2001;y<=2010;y++) document.write(`<option value="${(''+y).slice(-2)}">${(''+y).slice(-2)}</option>`);</script></select>
+    </div>
+    <button class="action-btn" onclick="checkBirthdate()">Unlock</button>
+</div>
+
+<div id="gameBox" class="content-box">
+    <div class="floating-emoji game-emoji">🎮</div>
+    <p style="font-size: 1.2rem;">Let's play a game! Are you in?</p>
+    <div style="display: flex; justify-content: center; gap: 15px;">
+        <button class="action-btn" onclick="transitionBox('gameBox', 'curiousBox')">Yes!</button>
+        <button id="noBtn" class="action-btn" style="background:none; border:1px solid rgba(255,255,255,0.4); transition: 0.1s;" onmouseover="moveNo()">No</button>
+    </div>
+</div>
+
+<div id="curiousBox" class="content-box">
+    <div class="floating-emoji">✨</div>
+    <p>This game is called "Time Knows Your Name."<br>Aren't you curious how Time knew your name?</p>
+    <div style="display: flex; justify-content: center; gap: 15px;">
+        <button class="action-btn" onclick="transitionBox('curiousBox', 'mechanicsBox')">I'm curious</button>
+        <button class="action-btn" style="background:none; border:1px solid rgba(255,255,255,0.4);" onclick="stopHere()">Stop here</button>
+    </div>
+    <br>
+    <iframe width="100%" height="100" scrolling="no" frameborder="no" allow="autoplay"
+    src="https://w.soundcloud.com/player/?url=https%3A//soundcloud.com/kylexian/tiny-light-ending-theme-of-toilet-bound-hanako-kun&color=%236a0dad&auto_play=true"></iframe>
+</div>
+
+<div id="mechanicsBox" class="content-box">
+    <div style="font-size:45px; margin-bottom:10px;">📝</div>
+    <p style="line-height: 1.6;"><strong>MECHANICS</strong><br>Match 8 pairs in 30s.<br>Max 25 moves.</p>
+    <button class="action-btn" onclick="startCountdown()">Game!</button>
+</div>
+
+<div id="actualGameBox" class="content-box">
+    <div style="font-family:'Press Start 2P'; font-size:10px; color:#e0bbff; margin-bottom:15px; background: rgba(0,0,0,0.3); padding: 10px; border-radius: 10px;">
+        TIME: <span id="timer">30</span>s | MOVES: <span id="moveCount">0</span>/25
+    </div>
+    <div id="cardGrid"></div>
+</div>
+
+<div id="gameOverBox" class="content-box">
+    <div style="font-size:60px; margin-bottom: 10px;">💀</div>
+    <p style="font-size: 1.3rem;">Time or Moves ran out!</p>
+    <button class="action-btn" onclick="tryAgain()">Try Again</button>
+</div>
+
+<div id="victoryBox" class="content-box">
+    <div style="font-size:60px; margin-bottom:15px;">🌟</div>
+    <div id="victoryType" class="typing-text" style="font-size: 1.4rem; font-weight: bold;"></div><br><br>
+    <button id="seeRewardBtn" class="action-btn" style="display:none;" onclick="showReward()">See reward</button>
+</div>
+
+<div id="rewardBox" class="content-box">
+    <div id="cakeEmoji" class="bouncing-cake">🎂</div>
+    <div id="rewardType" class="typing-text" style="display:block; margin-bottom:20px; font-size: 1.2rem;"></div>
+    <div id="wishArea" style="display:none;">
+        <input type="text" id="wishInput" placeholder="Type your wish here..." autocomplete="off">
+    </div>
+    <button id="wishBtn" class="action-btn" style="display:none;" onclick="makeAWish()">Make a wish</button>
+</div>
+
+<div id="riddleBox" class="content-box">
+    <div style="font-size:40px; margin-bottom:10px;">🔮</div>
+    <p id="riddlePrompt" style="font-size: 1rem; line-height: 1.5; color: #f2d7ff;">
+        "I only come once a year, but I’m gone in a flash. I start with a bright light and end with a smash. You want to have many, but you never want to be 'old', I’m the only day where your hidden age is told. What am I?"
+    </p>
+    <input type="text" id="riddleInput" placeholder="Enter your answer..." autocomplete="off">
+    <p id="hintText" style="color: #a259ff; font-size: 0.9rem; margin-top: 5px; min-height: 1.2rem;"></p>
+    <button class="action-btn" onclick="checkRiddle()">Answer</button>
+</div>
+
+<div id="cosmosVoiceBox" class="content-box">
+    <div style="font-size:40px; margin-bottom:10px;">🌌</div>
+    <p style="font-size: 1.1rem;">To proceed, the universe needs to sync with your frequency.</p>
+    <p style="font-size: 0.9rem; color:#e0bbff;">Hold the pulse to authenticate...</p>
+    <div id="pulseBtnContainer">
+        <div id="progressRing"></div>
+        <div id="orb" class="pulse-orb" onmousedown="startPulse()" onmouseup="endPulse()" ontouchstart="startPulse()" ontouchend="pulseActive = true; startPulse()" ontouchend="pulseActive = false; endPulse()"></div>
+    </div>
+    <p id="syncStatus" style="font-size: 0.8rem; letter-spacing: 1px; color:#a259ff;">WAITING...</p>
+</div>
+
+<div id="summaryBox" class="content-box">
+    <div style="font-size:35px; margin-bottom:15px;">⏳</div>
+    <p style="font-size: 1rem; color:#e0bbff;">While you were sleeping, dreaming, and growing...</p>
+    
+    <div class="summary-stat" id="stat1">
+        <span class="stat-label">EARTH ROTATED</span>
+        <span class="stat-value">6,209 times</span>
+    </div>
+    <div class="summary-stat" id="stat2">
+        <span class="stat-label">GALAXY TRIP</span>
+        <span class="stat-value">11.5B km traveled</span>
+    </div>
+    <div class="summary-stat" id="stat3">
+        <span class="stat-label">TOTAL HEARTBEATS</span>
+        <span class="stat-value">~625 Million</span>
+    </div>
+    
+    <button class="action-btn" id="summaryNext" style="display:none; margin-top:15px;" onclick="transitionBox('summaryBox', 'nameBox')">Continue Journey</button>
+</div>
+
+<div id="nameBox" class="content-box">
+    <div style="font-size:40px; margin-bottom:10px;">✨</div>
+    <p style="font-size: 1.2rem;">The universe is listening...</p>
+    <p>Type your name:</p>
+    <input type="text" id="nameInput" placeholder="Your name..." autocomplete="off">
+    <button class="action-btn" onclick="revealFinal()">Speak to Time</button>
+</div>
+
+<div id="finalBox" class="content-box">
+    <div id="liveCounter">
+        STARDUST EXISTENCE TIME:<br>
+        <span class="counter-value" id="cYears">0</span> YEARS<br>
+        <span class="counter-value" id="cDays">0</span> DAYS<br>
+        <span class="counter-value" id="cHours">0</span> HOURS<br>
+        <span class="counter-value" id="cMins">0</span> MINS<br>
+        <span class="counter-value" id="cSecs">0</span> SECS
+    </div>
+    <div id="finalMessage" class="typing-text" style="text-align: left; font-size: 1.05rem; line-height: 1.6;"></div>
+    <button id="skipBtn" onclick="skipTyping()">SKIP TYPING...</button>
+</div>
+
+<script>
+    let typingInterval; 
+    let fullMessageGlobal = "";
+
+    /* SHOOTING STAR LOGIC */
+    function createShootingStar() {
+        const star = document.createElement('div');
+        star.className = 'shooting-star';
+        star.style.top = Math.random() * 50 + '%';
+        star.style.left = Math.random() * 100 + '%';
+        document.body.appendChild(star);
+        setTimeout(() => star.remove(), 3000);
+    }
+    setInterval(createShootingStar, 4000);
+
+    /* STARDUST TRAIL LOGIC */
+    function createTrail(e) {
+        const x = e.pageX || e.touches[0].pageX;
+        const y = e.pageY || e.touches[0].pageY;
+        const p = document.createElement('div');
+        p.className = 'trail-particle';
+        const size = Math.random() * 6 + 2 + 'px';
+        p.style.width = size; p.style.height = size;
+        p.style.left = x + 'px'; p.style.top = y + 'px';
+        document.body.appendChild(p);
+        setTimeout(() => p.remove(), 1000);
+    }
+
+    function createStars() {
+        const container = document.getElementById('stars');
+        for (let i = 0; i < 150; i++) {
+            const star = document.createElement('div');
+            star.className = 'star';
+            const size = Math.random() * 3 + 'px';
+            star.style.width = size; star.style.height = size;
+            star.style.top = Math.random() * 100 + '%'; star.style.left = Math.random() * 100 + '%';
+            star.style.setProperty('--duration', Math.random() * 3 + 2 + 's');
+            container.appendChild(star);
+        }
+    }
+    createStars();
+
+    function showBox(id) {
+        document.getElementById('introContainer').style.opacity = '0';
+        setTimeout(() => {
+            document.getElementById('introContainer').style.display = 'none';
+            const el = document.getElementById(id);
+            el.style.display = 'block';
+            setTimeout(() => el.classList.add('show'), 50);
+        }, 500);
+    }
+
+    function transitionBox(curr, next) {
+        const c = document.getElementById(curr);
+        c.classList.remove('show');
+        setTimeout(() => {
+            c.style.display = 'none';
+            const n = document.getElementById(next);
+            n.style.display = 'block';
+            setTimeout(() => n.classList.add('show'), 50);
+            if(next === 'summaryBox') startSummary();
+            if(next === 'finalBox') {
+                document.body.style.background = "#0c0117 radial-gradient(circle at bottom, #2b0c4a 0%, #0c0117 100%)";
+            }
+        }, 800);
+    }
+
+    function checkBirthdate() {
+        const m = document.getElementById('month').value;
+        const d = document.getElementById('day').value;
+        const y = document.getElementById('year').value;
+        if(m === "02" && d === "23" && y === "09") transitionBox('birthBox', 'gameBox');
+        else {
+            const box = document.getElementById('birthBox');
+            box.classList.add('error-shake');
+            setTimeout(() => box.classList.remove('error-shake'), 400);
+        }
+    }
+
+    function moveNo() {
+        const btn = document.getElementById('noBtn');
+        let x = Math.random() * (window.innerWidth - 100);
+        let y = Math.random() * (window.innerHeight - 50);
+        btn.style.position = 'fixed';
+        btn.style.left = x + 'px';
+        btn.style.top = y + 'px';
+        btn.style.zIndex = '9999';
+    }
+
+    function stopHere() { alert("The universe will miss you. 💜"); location.reload(); }
+
+    function typeWriter(text, elementId, callback) {
+        let i = 0; 
+        const el = document.getElementById(elementId); 
+        el.innerHTML = '';
+        fullMessageGlobal = text;
+        
+        if(elementId === "finalMessage") {
+            document.getElementById("skipBtn").style.display = "block";
+            document.getElementById("liveCounter").style.display = "block";
+            startLiveCounter();
+        }
+
+        typingInterval = setInterval(() => {
+            if (i < text.length) { 
+                el.innerHTML += text.charAt(i); 
+                i++; 
+                if(elementId === "finalMessage") {
+                    const box = document.getElementById('finalBox');
+                    box.scrollTop = box.scrollHeight;
+                }
+            }
+            else {
+                clearInterval(typingInterval);
+                if(elementId === "finalMessage") document.getElementById("skipBtn").style.display = "none";
+                if (callback) callback();
+            }
+        }, 45);
+    }
+
+    function skipTyping() {
+        clearInterval(typingInterval);
+        const el = document.getElementById("finalMessage");
+        el.innerHTML = fullMessageGlobal;
+        document.getElementById("skipBtn").style.display = "none";
+        const box = document.getElementById('finalBox');
+        box.scrollTop = box.scrollHeight;
+    }
+
+    function startLiveCounter() {
+        const birthDate = new Date(2009, 1, 23); 
+        setInterval(() => {
+            const now = new Date();
+            const diff = now - birthDate;
+            const seconds = Math.floor(diff / 1000);
+            const minutes = Math.floor(seconds / 60);
+            const hours = Math.floor(minutes / 60);
+            const days = Math.floor(hours / 24);
+            const years = Math.floor(days / 365.25);
+            document.getElementById('cYears').innerText = years.toLocaleString();
+            document.getElementById('cDays').innerText = days.toLocaleString();
+            document.getElementById('cHours').innerText = hours.toLocaleString();
+            document.getElementById('cMins').innerText = minutes.toLocaleString();
+            document.getElementById('cSecs').innerText = seconds.toLocaleString();
+        }, 1000);
+    }
+
+    let items = ['🪐','🪐','🌌','🌌','☄️','☄️','🌑','🌑','☀️','☀️','⭐','⭐','🔭','🔭','🚀','🚀'];
+    let flipped = [], matches = 0, moves = 0, timeLeft = 30, gameTimer;
+
+    function tryAgain() {
+        const go = document.getElementById('gameOverBox');
+        go.classList.remove('show');
+        setTimeout(() => {
+            go.style.display = 'none';
+            startCountdown();
+        }, 800);
+    }
+
+    function startCountdown() {
+        timeLeft = 30; moves = 0; matches = 0;
+        document.getElementById('timer').innerText = timeLeft;
+        document.getElementById('moveCount').innerText = moves;
+        const mech = document.getElementById('mechanicsBox');
+        mech.style.display = 'none'; mech.classList.remove('show');
+        const overlay = document.getElementById('countdownOverlay');
+        overlay.style.display = 'flex';
+        setTimeout(() => overlay.style.opacity = '1', 50);
+        let count = 3; overlay.innerText = count;
+        const timer = setInterval(() => {
+            count--;
+            if(count > 0) overlay.innerText = count;
+            else {
+                clearInterval(timer);
+                overlay.style.opacity = '0';
+                setTimeout(() => { overlay.style.display = 'none'; runGame(); }, 800);
+            }
+        }, 1000);
+    }
+
+    function runGame() {
+        const gameBox = document.getElementById('actualGameBox');
+        gameBox.style.display = 'block';
+        setTimeout(() => gameBox.classList.add('show'), 50);
+        const grid = document.getElementById('cardGrid'); grid.innerHTML = '';
+        const shuffled = [...items].sort(() => Math.random() - 0.5);
+        shuffled.forEach((emoji, index) => {
+            const container = document.createElement('div');
+            container.className = 'card-container';
+            const card = document.createElement('div');
+            card.className = 'memory-card';
+            card.dataset.val = emoji;
+            card.innerHTML = `<div class="card-face card-back"></div><div class="card-face card-front">${emoji}</div>`;
+            card.onclick = () => {
+                if(flipped.length < 2 && !card.classList.contains('flipped')) {
+                    card.classList.add('flipped');
+                    flipped.push(card);
+                    if(flipped.length === 2) {
+                        moves++; document.getElementById('moveCount').innerText = moves;
+                        if(moves > 25) { setTimeout(() => end(false), 500); return; }
+                        if(flipped[0].dataset.val === flipped[1].dataset.val) { matches++; flipped = []; if(matches === 8) setTimeout(() => end(true), 800); }
+                        else setTimeout(() => { flipped.forEach(c => c.classList.remove('flipped')); flipped=[]; }, 800);
+                    }
+                }
+            };
+            container.appendChild(card); grid.appendChild(container);
+            setTimeout(() => container.classList.add('card-rise'), index * 80);
+        });
+        if(gameTimer) clearInterval(gameTimer);
+        gameTimer = setInterval(() => { timeLeft--; document.getElementById('timer').innerText = timeLeft; if(timeLeft <= 0) end(false); }, 1000);
+    }
+
+    function end(win) {
+        clearInterval(gameTimer);
+        const g = document.getElementById('actualGameBox');
+        g.classList.remove('show');
+        setTimeout(() => {
+            g.style.display = 'none';
+            if(win) {
+                const v = document.getElementById('victoryBox');
+                v.style.display = 'block';
+                setTimeout(() => { v.classList.add('show'); typeWriter("Yey! You did it!", "victoryType", () => { document.getElementById('seeRewardBtn').style.display = 'inline-block'; }); }, 50);
+            } else {
+                const go = document.getElementById('gameOverBox');
+                go.style.display = 'block';
+                setTimeout(() => go.classList.add('show'), 50);
+            }
+        }, 800);
+    }
+
+    function showReward() {
+        const v = document.getElementById('victoryBox');
+        v.classList.remove('show');
+        setTimeout(() => {
+            v.style.display = 'none';
+            const r = document.getElementById('rewardBox');
+            r.style.display = 'block';
+            setTimeout(() => { r.classList.add('show'); typeWriter("Congrats! You won a cake!", "rewardType", () => { document.getElementById('wishBtn').style.display = 'inline-block'; }); }, 50);
+        }, 800);
+    }
+
+    function makeAWish() {
+        const btn = document.getElementById('wishBtn');
+        const inputArea = document.getElementById('wishArea');
+        const inputField = document.getElementById('wishInput');
+        const rewardType = document.getElementById('rewardType');
+        if (btn.innerText === "Make a wish") {
+            document.body.classList.add('universe-dark');
+            document.getElementById('cakeEmoji').classList.add('stop-animation');
+            document.getElementById('rewardType').innerHTML = "What is your heart's desire?";
+            inputArea.style.display = "block";
+            btn.innerText = "Send it to universe";
+        } else {
+            const wish = inputField.value;
+            if(!wish) { alert("Please write something..."); return; }
+            rewardType.innerHTML = wish.split('').map(char => `<span class="scatter-letter">${char === ' ' ? '&nbsp;' : char}</span>`).join('');
+            inputArea.style.display = 'none'; btn.style.display = 'none';
+            setTimeout(() => {
+                const letters = document.querySelectorAll('.scatter-letter');
+                letters.forEach(letter => {
+                    const moveX = (Math.random() - 0.5) * 1000;
+                    const moveY = (Math.random() - 0.5) * 1000;
+                    const rotate = (Math.random() - 0.5) * 720;
+                    letter.style.transform = `translate(${moveX}px, ${moveY}px) rotate(${rotate}deg) scale(0)`;
+                    letter.style.opacity = '0'; letter.style.filter = 'blur(10px)';
+                });
+                explode(window.innerWidth/2, window.innerHeight/2);
+                document.getElementById('rewardBox').classList.add('fold-animation');
+                setTimeout(() => { document.getElementById('rewardBox').style.display = 'none'; transitionBox('rewardBox', 'riddleBox'); }, 1500);
+            }, 100);
+        }
+    }
+
+    function explode(x, y) {
+        for (let i = 0; i < 50; i++) {
+            const p = document.createElement('div');
+            p.className = 'particle'; document.body.appendChild(p);
+            const size = Math.random() * 8 + 4 + 'px';
+            p.style.width = size; p.style.height = size;
+            p.style.left = x + 'px'; p.style.top = y + 'px';
+            const destX = (Math.random() - 0.5) * 600; const destY = (Math.random() - 0.5) * 600;
+            p.animate([{ transform: 'translate(0, 0) scale(1)', opacity: 1 }, { transform: `translate(${destX}px, ${destY}px) scale(0)`, opacity: 0 }], { duration: 1500, easing: 'ease-out' }).onfinish = () => p.remove();
+        }
+    }
+
+    let riddleFails = 0;
+    const fullHint = "Birthday";
+    function checkRiddle() {
+        const val = document.getElementById('riddleInput').value.toLowerCase().trim();
+        const box = document.getElementById('riddleBox');
+        if(val === "a birthday" || val === "birthday") { transitionBox('riddleBox', 'cosmosVoiceBox'); }
+        else {
+            riddleFails++;
+            box.classList.add('error-shake'); setTimeout(() => box.classList.remove('error-shake'), 400);
+            let hintDisplay = "Hint: ";
+            for(let i=0; i < riddleFails; i++) { if(i < fullHint.length) hintDisplay += fullHint[i]; }
+            if(riddleFails < fullHint.length) hintDisplay += "...";
+            document.getElementById('hintText').innerText = hintDisplay;
+        }
+    }
+
+    /* VOICE OF COSMOS LOGIC */
+    let pulseTimer;
+    let pulseProgress = 0;
+    function startPulse() {
+        document.getElementById('progressRing').style.display = 'block';
+        document.getElementById('syncStatus').innerText = "SYNCING FREQUENCY...";
+        pulseTimer = setInterval(() => {
+            pulseProgress += 5;
+            createRipple();
+            if(pulseProgress >= 100) {
+                clearInterval(pulseTimer);
+                document.getElementById('syncStatus').innerText = "FREQUENCY MATCHED.";
+                setTimeout(() => transitionBox('cosmosVoiceBox', 'summaryBox'), 1000);
+            }
+        }, 100);
+    }
+    function endPulse() {
+        clearInterval(pulseTimer);
+        if(pulseProgress < 100) {
+            pulseProgress = 0;
+            document.getElementById('progressRing').style.display = 'none';
+            document.getElementById('syncStatus').innerText = "CONNECTION INTERRUPTED.";
+        }
+    }
+    function createRipple() {
+        const container = document.getElementById('pulseBtnContainer');
+        const r = document.createElement('div');
+        r.className = 'ripple';
+        container.appendChild(r);
+        setTimeout(() => r.remove(), 2000);
+    }
+
+    /* TIMELINE SUMMARY LOGIC */
+    function startSummary() {
+        setTimeout(() => document.getElementById('stat1').classList.add('reveal'), 1000);
+        setTimeout(() => document.getElementById('stat2').classList.add('reveal'), 2500);
+        setTimeout(() => document.getElementById('stat3').classList.add('reveal'), 4000);
+        setTimeout(() => {
+            const btn = document.getElementById('summaryNext');
+            btn.style.display = 'inline-block';
+            setTimeout(() => btn.style.opacity = '1', 50);
+        }, 5500);
+    }
+
+    function revealFinal() {
+        const name = document.getElementById('nameInput').value;
+        if(!name) { alert("Please type your name."); return; }
+        
+        // --- CONSTELLATION REVEAL START ---
+        const box = document.getElementById('nameBox');
+        box.classList.remove('show');
+        setTimeout(() => {
+            box.style.display = 'none';
+            const overlay = document.getElementById('constellationOverlay');
+            overlay.style.display = 'flex';
+            document.getElementById('constellationName').innerText = name.toUpperCase();
+            setTimeout(() => overlay.style.opacity = '1', 50);
+            
+            setTimeout(() => {
+                overlay.style.opacity = '0';
+                setTimeout(() => {
+                    overlay.style.display = 'none';
+                    const fBox = document.getElementById('finalBox');
+                    fBox.style.display = 'block';
+                    document.body.style.background = "#0c0117 radial-gradient(circle at bottom, #2b0c4a 0%, #0c0117 100%)";
+                    setTimeout(() => fBox.classList.add('show'), 50);
+                    startFinalLetter(name);
+                }, 1500);
+            }, 3500);
+        }, 800);
+    }
+
+    function startFinalLetter(name) {
+        const longMsg = `Happiest Birthday, ${name}.
+
+Okay wait lang, so I refuse to greet you in a basic way ‘cause I believe (HUY) nothing about your existence is basic. Like sorry pero ang pangit kasi pag “happy birthday, mbtc” kineme kemerutz lang like duh. But before anything else, relax relax HAHAHA this is NOT a confession, kalma ka lang.
+
+So technically… today marks the exact second the universe allowed your consciousness to happen. Hindi ako OA ha, that's science HUYY I searched! Did you know? The atoms in your body are older than Earth itself? Carbon, nitrogen, oxygen, forged inside exploding stars billions of years ago. They survived cosmic chaos and traveled light-years of emptiness, just to arrange themselves in this one super rare way that can think and overthink. Before you even had a name, before humans had language, the matter that would become you was already existing. In the most literal sense, you are stardust that learned how to breathe. Like… yoouuehoo hello hello!
+
+I realized that the probability of your exact DNA forming is astronomically close to zero. Kasi diba, trillions of combinations could’ve existed. Almost none of them would result in you. Pero parang sinabi ng universe, “Sige, ito nalang” And now you’re here HUUYYUYUY Pero grabe, it’s not almost. Ikaw talaga. You get my point?
+
+The day you were born, Earth was spinning at 1,670 km/h, orbiting the Sun at 107,000 km/h. Everything was in relentless motion. And in the middle of all that chaos, a new consciousness opened its eyes. Your neurons fired in a pattern that had never existed before and will never exist again. Limited edition yarnz?
+
+The sky that night wasn't empty. You know I searched, Comet Lulin, the Green Comet, was making its closest approach to Earth, about 38 million miles away. Sabi nila it glowed green daw because of cyanogen and diatomic carbon reacting with sunlight. Then it even showed an anti-tail, pointing forward and backward at the same time, which only happens daw when the alignment between Earth, Sun, and comet is exact. From here, it appeared near Saturn and Regulus in Leo. Gold. Blue-white. Green. A planet, a star, and a comet sharing one frame of sky. Distances so wide??? yet from Earth they looked like they belonged together. And that was the same night you arrived.
+
+Think about that.
+
+Every 27 days, your skin replaces itself. Every decade, most of your cells are new. The child you were is technically gone. But there’s still continuity. There’s still a “you” threading through all the change. Identity surviving replacement. Dibaa ang interesting, constant change, but somehow still you.
+
+Well, lectures aside, parang nag astrocamp lang e noh? HAHAHA
+
+Happiest birthday to the child you once were, who survived things they couldn’t even explain. Happiest birthday to who you are now, literally a battlefield of choices. And happiest birthday to the future you, the version that doesn’t exist yet but is already being built by the smallest decisions you’re making todayy, kaya ayusin mo lang CHARETZS
+
+You know, the universe has been expanding for 13.8 billion years. And on one specific day, it expanded just enough to include you. You exist. You can ask why. You can search. You can create meaning even if the cosmos doesn’t hand it to you.
+
+The stars don’t care. The comets don’t care. The planets don’t care.
+But somehow, in their indifference, they were your witnesses.
+
+Soo remember this whenever you feel a little down, on the night you arrived, the sky was not empty. Parang the universe celebrated your arrival HUYYYY na para bang? Charururtsz hbd mbtc -_- 
+
+Time will always know your name,
+Katleen`;
+
+        setTimeout(() => {
+            typeWriter(longMsg, "finalMessage");
+        }, 1000);
+    }
+</script>
+</body>
+</html>
